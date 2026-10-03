@@ -14,13 +14,50 @@ import {
   ExternalLink,
   Code2,
   Eye,
-  Sliders
+  Sliders,
+  Timer,
+  HardDrive
 } from 'lucide-react';
 import TwoSumVisualizer from './visualizers/TwoSumVisualizer';
 import SlidingWindowVisualizer from './visualizers/SlidingWindowVisualizer';
 import TwoPointersVisualizer from './visualizers/TwoPointersVisualizer';
 import BinarySearchVisualizer from './visualizers/BinarySearchVisualizer';
 import { triggerConfetti } from '../utils/confetti';
+
+function renderFormattedText(text) {
+  if (!text) return null;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part, index) => {
+    if (part.match(/^https?:\/\//)) {
+      let cleanUrl = part;
+      let trailing = '';
+      const match = part.match(/[.,;)]+$/);
+      if (match) {
+        trailing = match[0];
+        cleanUrl = part.slice(0, -trailing.length);
+      }
+
+      return (
+        <React.Fragment key={index}>
+          <a
+            href={cleanUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-brand-400 hover:text-brand-300 underline underline-offset-2 break-all hover:opacity-90 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span>{cleanUrl}</span>
+            <ExternalLink className="w-3 h-3 inline shrink-0" />
+          </a>
+          {trailing}
+        </React.Fragment>
+      );
+    }
+    return part;
+  });
+}
 
 export default function VisualizerArena({
   problem,
@@ -109,9 +146,8 @@ export default function VisualizerArena({
 
   return (
     <div
-      className={`flex flex-col bg-surface-card border border-surface-border rounded-2xl overflow-hidden transition-all duration-300 relative shadow-glass ${
-        isZenMode ? 'fixed inset-4 z-50 shadow-2xl' : 'w-full h-full'
-      }`}
+      className={`flex flex-col bg-surface-card border border-surface-border rounded-2xl overflow-hidden transition-all duration-300 relative shadow-glass ${isZenMode ? 'fixed inset-4 z-50 shadow-2xl' : 'w-full h-full'
+        }`}
     >
       {/* Visualizer Top Header */}
       <div className="flex flex-col gap-2.5 px-5 py-3 border-b border-surface-border bg-neutral-950/80 backdrop-blur-md">
@@ -128,11 +164,11 @@ export default function VisualizerArena({
               {problem.difficulty}
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-neutral-900 border border-brand-500/20 text-brand-400 shadow-sm">
-              ⏱️ {problem.timeComplexity}
+              <Timer className="w-4 h-4" /> {problem.timeComplexity}
             </span>
             {problem.spaceComplexity && (
               <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md bg-neutral-900 border border-white/5 text-cyan-400">
-                💾 {problem.spaceComplexity}
+                <HardDrive className="w-4 h-4" /> {problem.spaceComplexity}
               </span>
             )}
           </div>
@@ -146,7 +182,21 @@ export default function VisualizerArena({
         {problem.shortDescription && (
           <div className="text-xs text-neutral-300 leading-relaxed bg-neutral-900/50 px-3.5 py-2 rounded-xl border border-white/5 backdrop-blur-sm">
             <span className="text-neutral-400 font-medium mr-1.5">Overview:</span>
-            {problem.shortDescription}
+            {renderFormattedText(problem.shortDescription)}
+          </div>
+        )}
+
+        {/* Row 2.5: Tags fetched from visuals <span class="meta-tag"> */}
+        {problem.tags && problem.tags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            {problem.tags.map((tag, idx) => (
+              <span
+                key={idx}
+                className="meta-tag inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-mono font-medium bg-neutral-900/90 border border-white/10 text-neutral-300 hover:text-brand-300 hover:border-brand-500/30 transition-all shadow-sm"
+              >
+                {tag}
+              </span>
+            ))}
           </div>
         )}
 
@@ -155,11 +205,10 @@ export default function VisualizerArena({
           {/* Solved Toggle Checkbox */}
           <button
             onClick={handleSolvedClick}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border transition-all ${
-              isSolved
-                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-glow-emerald'
-                : 'bg-neutral-900 text-neutral-400 border-white/10 hover:text-neutral-200 hover:border-white/20'
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border transition-all ${isSolved
+              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-glow-emerald'
+              : 'bg-neutral-900 text-neutral-400 border-white/10 hover:text-neutral-200 hover:border-white/20'
+              }`}
           >
             <CheckCircle className={`w-3.5 h-3.5 ${isSolved ? 'fill-emerald-400 text-neutral-950' : ''}`} />
             <span>{isSolved ? 'Solved' : 'Mark Solved'}</span>
@@ -170,11 +219,10 @@ export default function VisualizerArena({
             <div className="flex items-center p-0.5 rounded-lg bg-neutral-900/90 border border-white/10">
               <button
                 onClick={() => setActiveTab('canvas')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                  activeTab === 'canvas'
-                    ? 'bg-brand-500 text-neutral-950 font-semibold shadow-glow-emerald'
-                    : 'text-neutral-400 hover:text-neutral-200'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${activeTab === 'canvas'
+                  ? 'bg-brand-500 text-neutral-950 font-semibold shadow-glow-emerald'
+                  : 'text-neutral-400 hover:text-neutral-200'
+                  }`}
               >
                 <Sparkles className="w-3 h-3" />
                 <span>Interactive</span>
@@ -182,11 +230,10 @@ export default function VisualizerArena({
 
               <button
                 onClick={() => setActiveTab('embed')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                  activeTab === 'embed'
-                    ? 'bg-neutral-800 text-white font-semibold'
-                    : 'text-neutral-400 hover:text-neutral-200'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${activeTab === 'embed'
+                  ? 'bg-neutral-800 text-white font-semibold'
+                  : 'text-neutral-400 hover:text-neutral-200'
+                  }`}
               >
                 <Eye className="w-3 h-3" />
                 <span>Full Visual</span>
@@ -194,11 +241,10 @@ export default function VisualizerArena({
 
               <button
                 onClick={() => setActiveTab('explanation')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                  activeTab === 'explanation'
-                    ? 'bg-neutral-800 text-white font-semibold'
-                    : 'text-neutral-400 hover:text-neutral-200'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${activeTab === 'explanation'
+                  ? 'bg-neutral-800 text-white font-semibold'
+                  : 'text-neutral-400 hover:text-neutral-200'
+                  }`}
               >
                 <HelpCircle className="w-3 h-3" />
                 <span>Intuition</span>
@@ -296,11 +342,10 @@ export default function VisualizerArena({
                   <button
                     key={s}
                     onClick={() => setSpeed(s)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-mono transition-all ${
-                      speed === s
-                        ? 'bg-brand-500 text-neutral-950 font-bold'
-                        : 'text-neutral-400 hover:text-neutral-200'
-                    }`}
+                    className={`px-2 py-0.5 rounded text-[11px] font-mono transition-all ${speed === s
+                      ? 'bg-brand-500 text-neutral-950 font-bold'
+                      : 'text-neutral-400 hover:text-neutral-200'
+                      }`}
                   >
                     {s}x
                   </button>
@@ -338,7 +383,24 @@ export default function VisualizerArena({
         {/* Intuition & Problem Statement Tab */}
         {activeTab === 'explanation' && (
           <div className="flex-1 p-5 sm:p-6 overflow-y-auto max-w-4xl mx-auto space-y-5">
-            {/* 1. Layman's Terms Card (Fetched from visual explanation-panel) */}
+            {/* 1. Full Problem Statement (Fetched from Python Solution Comment before class Solution) */}
+            <div className="p-5 rounded-2xl bg-neutral-900/70 border border-white/10 backdrop-blur-md">
+              <div className="flex items-center justify-between pb-2 mb-3 border-b border-white/5">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-400">
+                  <Code2 className="w-4 h-4 text-brand-400" />
+                  <span>Problem Statement</span>
+                </div>
+                <span className="text-[10px] font-mono text-neutral-400">
+                  problem/{problem.num}
+                </span>
+              </div>
+
+              <div className="bg-neutral-950/80 p-4 rounded-xl border border-white/5 max-h-80 overflow-y-auto font-mono text-xs text-neutral-300 whitespace-pre-wrap leading-relaxed select-text">
+                {renderFormattedText(problem.fullProblemStatement || problem.shortDescription)}
+              </div>
+            </div>
+
+            {/* 2. Layman's Terms Card (Fetched from visual explanation-panel) */}
             <div className="p-5 rounded-2xl bg-neutral-900/80 border border-brand-500/30 backdrop-blur-md relative overflow-hidden shadow-glow-emerald">
               <div className="absolute top-0 right-0 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
               <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-emerald-400 mb-3 pb-2 border-b border-white/5">
@@ -353,26 +415,9 @@ export default function VisualizerArena({
                 />
               ) : (
                 <p className="text-neutral-300 text-sm leading-relaxed">
-                  {problem.laymanExplanation || problem.shortDescription}
+                  {renderFormattedText(problem.laymanExplanation || problem.shortDescription)}
                 </p>
               )}
-            </div>
-
-            {/* 2. Full Problem Statement (Fetched from Python Solution Comment before class Solution) */}
-            <div className="p-5 rounded-2xl bg-neutral-900/70 border border-white/10 backdrop-blur-md">
-              <div className="flex items-center justify-between pb-2 mb-3 border-b border-white/5">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-400">
-                  <Code2 className="w-4 h-4 text-brand-400" />
-                  <span>Problem Statement (Python Solution Specification)</span>
-                </div>
-                <span className="text-[10px] font-mono text-neutral-400">
-                  python/{problem.num}
-                </span>
-              </div>
-
-              <div className="bg-neutral-950/80 p-4 rounded-xl border border-white/5 max-h-72 overflow-y-auto font-mono text-xs text-neutral-300 whitespace-pre-wrap leading-relaxed">
-                {problem.fullProblemStatement || problem.shortDescription}
-              </div>
             </div>
 
             {/* 3. Complexity Analysis Card */}

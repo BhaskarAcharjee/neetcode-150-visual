@@ -12,10 +12,11 @@ export default function CodeHighlighter({ code = '', language = 'python' }) {
     if (!line) return <span className="inline-block h-4"></span>;
 
     // Check for comments
-    if (language === 'python' && line.trim().startsWith('#')) {
+    const trimmed = line.trim();
+    if (language === 'python' && (trimmed.startsWith('#') || trimmed.startsWith('"""') || trimmed.startsWith("'''"))) {
       return <span className="text-neutral-500 italic">{line}</span>;
     }
-    if (language === 'java' && line.trim().startsWith('//')) {
+    if (language === 'java' && (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*') || trimmed.startsWith('*/'))) {
       return <span className="text-neutral-500 italic">{line}</span>;
     }
 

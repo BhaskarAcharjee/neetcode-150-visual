@@ -960,8 +960,9 @@ export const ALL_PROBLEMS = (() => {
       spaceComplexity: meta?.spaceComplexity || p.spaceComplexity,
       laymanHtml: meta?.laymanHtml || "",
       fullProblemStatement: meta?.fullProblemStatement || p.summary,
-      pythonCode: p.pythonCode || sol?.python || "",
-      javaCode: p.javaCode || sol?.java || "",
+      tags: (meta?.tags && meta.tags.length > 0) ? meta.tags : (p.tags || [p.category.split(" ")[0]]),
+      pythonCode: sol?.python || p.pythonCode || "",
+      javaCode: sol?.java || p.javaCode || "",
     });
   });
 
@@ -981,7 +982,7 @@ export const ALL_PROBLEMS = (() => {
         shortDescription: meta?.shortDescription || `Solve the ${item.name} problem efficiently using optimal algorithms and data structures.`,
         laymanHtml: meta?.laymanHtml || "",
         fullProblemStatement: meta?.fullProblemStatement || `Standard NeetCode algorithm: ${item.name}.`,
-        tags: [item.category.split(" ")[0] || "Algorithm"],
+        tags: (meta?.tags && meta.tags.length > 0) ? meta.tags : [item.category.split(" ")[0] || "Algorithm"],
         file: item.file,
         interactiveType: "two-sum",
         summary: meta?.shortDescription || `Standard NeetCode algorithm: ${item.name}.`,
@@ -994,7 +995,7 @@ export const ALL_PROBLEMS = (() => {
         javaCode: sol?.java || `// Solution for ${item.num}: ${item.name}\nclass Solution {\n    public void solve(int[] data) {\n    }\n}`
       });
     } else {
-      // Ensure existing item has javaCode & pythonCode & metadata updated if missing or stubbed
+      // Ensure existing item has javaCode & pythonCode & metadata updated
       const existing = map.get(item.num);
       if (meta) {
         existing.shortDescription = meta.shortDescription || existing.shortDescription;
@@ -1002,11 +1003,14 @@ export const ALL_PROBLEMS = (() => {
         existing.spaceComplexity = meta.spaceComplexity || existing.spaceComplexity;
         existing.laymanHtml = meta.laymanHtml || existing.laymanHtml;
         existing.fullProblemStatement = meta.fullProblemStatement || existing.fullProblemStatement;
+        if (meta.tags && meta.tags.length > 0) {
+          existing.tags = meta.tags;
+        }
       }
-      if ((!existing.javaCode || existing.javaCode.includes('// Implementation for')) && sol?.java) {
+      if (sol?.java) {
         existing.javaCode = sol.java;
       }
-      if ((!existing.pythonCode || existing.pythonCode.includes('# Implementation for')) && sol?.python) {
+      if (sol?.python) {
         existing.pythonCode = sol.python;
       }
     }

@@ -19,6 +19,42 @@ import {
 import CodeHighlighter from './CodeHighlighter';
 import { triggerConfetti } from '../utils/confetti';
 
+function cleanPythonCode(code) {
+  if (!code) return '';
+  let cleaned = code;
+  // 1. Remove docstring above class Solution
+  const classIdx = cleaned.indexOf('class Solution');
+  if (classIdx !== -1) {
+    const prefix = cleaned.slice(0, classIdx);
+    const suffix = cleaned.slice(classIdx);
+    const cleanedPrefix = prefix
+      .replace(/"""[\s\S]*?"""/g, '')
+      .replace(/'''[\s\S]*?'''/g, '')
+      .trim();
+    cleaned = (cleanedPrefix ? cleanedPrefix + '\n\n' : '') + suffix;
+  } else {
+    cleaned = cleaned
+      .replace(/^\s*"""[\s\S]*?"""\s*/g, '')
+      .replace(/^\s*'''[\s\S]*?'''\s*/g, '');
+  }
+
+  // 2. Convert any docstrings inside Solution into # comments
+  const docstringToComments = (match, indent, content) => {
+    return content
+      .split('\n')
+      .map(line => {
+        const trimmed = line.trim();
+        return trimmed ? `${indent}# ${trimmed}` : `${indent}#`;
+      })
+      .join('\n');
+  };
+
+  cleaned = cleaned.replace(/([ \t]*)"""([\s\S]*?)"""/g, docstringToComments);
+  cleaned = cleaned.replace(/([ \t]*)'''([\s\S]*?)'''/g, docstringToComments);
+
+  return cleaned.trim();
+}
+
 export default function SolutionEditor({ problem, onSolveSuccess }) {
   const [language, setLanguage] = useState('python'); // 'python' | 'java'
   const [isSplitView, setIsSplitView] = useState(false);
@@ -28,7 +64,8 @@ export default function SolutionEditor({ problem, onSolveSuccess }) {
   const [activeOutputTab, setActiveOutputTab] = useState('console'); // 'console' | 'tests'
   const [showConsole, setShowConsole] = useState(true);
 
-  const pythonCode = problem.pythonCode || `# Solution for ${problem.num}: ${problem.name}\nclass Solution:\n    def solve(self):\n        pass`;
+  const rawPython = problem.pythonCode || `# Solution for ${problem.num}: ${problem.name}\nclass Solution:\n    def solve(self):\n        pass`;
+  const pythonCode = cleanPythonCode(rawPython);
   const javaCode = problem.javaCode || `// Solution for ${problem.num}: ${problem.name}\nclass Solution {\n    public void solve() {\n    }\n}`;
 
   const handleCopy = (lang) => {
