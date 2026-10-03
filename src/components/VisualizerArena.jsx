@@ -114,25 +114,44 @@ export default function VisualizerArena({
       }`}
     >
       {/* Visualizer Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-surface-border bg-neutral-950/70 backdrop-blur-md">
-        {/* Left: Problem Meta */}
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-brand-400">
-            #{problem.num}
-          </span>
-          <h2 className="text-base font-bold text-neutral-100 flex items-center gap-2">
-            {problem.name}
-          </h2>
-          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${difficultyColors[problem.difficulty] || difficultyColors.Medium}`}>
-            {problem.difficulty}
-          </span>
-          <span className="hidden md:inline-flex text-[11px] font-mono px-2 py-0.5 rounded bg-neutral-900 border border-white/5 text-neutral-400">
-            {problem.timeComplexity}
-          </span>
+      <div className="flex flex-col gap-2.5 px-5 py-3 border-b border-surface-border bg-neutral-950/80 backdrop-blur-md">
+        {/* Row 1: Problem Title, Badges, and Stats */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-brand-400">
+              #{problem.num}
+            </span>
+            <h2 className="text-base font-bold text-neutral-100 flex items-center gap-2">
+              {problem.name}
+            </h2>
+            <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${difficultyColors[problem.difficulty] || difficultyColors.Medium}`}>
+              {problem.difficulty}
+            </span>
+            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-neutral-900 border border-brand-500/20 text-brand-400 shadow-sm">
+              ⏱️ {problem.timeComplexity}
+            </span>
+            {problem.spaceComplexity && (
+              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md bg-neutral-900 border border-white/5 text-cyan-400">
+                💾 {problem.spaceComplexity}
+              </span>
+            )}
+          </div>
+
+          <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-neutral-500">
+            <span>{problem.category}</span>
+          </div>
         </div>
 
-        {/* Right: View Mode Tabs & Zen Button */}
-        <div className="flex items-center gap-2">
+        {/* Row 2: Short problem statement fetched from visual <div class="problem-info"> <p> tag */}
+        {problem.shortDescription && (
+          <div className="text-xs text-neutral-300 leading-relaxed bg-neutral-900/50 px-3.5 py-2 rounded-xl border border-white/5 backdrop-blur-sm">
+            <span className="text-neutral-400 font-medium mr-1.5">Overview:</span>
+            {problem.shortDescription}
+          </div>
+        )}
+
+        {/* Row 3: Action Buttons & Mode Switcher Tabs (Above the visualizer arena) */}
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/5">
           {/* Solved Toggle Checkbox */}
           <button
             onClick={handleSolvedClick}
@@ -147,52 +166,54 @@ export default function VisualizerArena({
           </button>
 
           {/* Mode Switcher Tabs */}
-          <div className="flex items-center p-0.5 rounded-lg bg-neutral-900/90 border border-white/10">
-            <button
-              onClick={() => setActiveTab('canvas')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                activeTab === 'canvas'
-                  ? 'bg-brand-500 text-neutral-950 font-semibold shadow-glow-emerald'
-                  : 'text-neutral-400 hover:text-neutral-200'
-              }`}
-            >
-              <Sparkles className="w-3 h-3" />
-              <span>Interactive</span>
-            </button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center p-0.5 rounded-lg bg-neutral-900/90 border border-white/10">
+              <button
+                onClick={() => setActiveTab('canvas')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  activeTab === 'canvas'
+                    ? 'bg-brand-500 text-neutral-950 font-semibold shadow-glow-emerald'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                <Sparkles className="w-3 h-3" />
+                <span>Interactive</span>
+              </button>
 
-            <button
-              onClick={() => setActiveTab('embed')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                activeTab === 'embed'
-                  ? 'bg-neutral-800 text-white font-semibold'
-                  : 'text-neutral-400 hover:text-neutral-200'
-              }`}
-            >
-              <Eye className="w-3 h-3" />
-              <span>Full Visual</span>
-            </button>
+              <button
+                onClick={() => setActiveTab('embed')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  activeTab === 'embed'
+                    ? 'bg-neutral-800 text-white font-semibold'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                <Eye className="w-3 h-3" />
+                <span>Full Visual</span>
+              </button>
 
+              <button
+                onClick={() => setActiveTab('explanation')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  activeTab === 'explanation'
+                    ? 'bg-neutral-800 text-white font-semibold'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                <HelpCircle className="w-3 h-3" />
+                <span>Intuition</span>
+              </button>
+            </div>
+
+            {/* Zen Mode Button */}
             <button
-              onClick={() => setActiveTab('explanation')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                activeTab === 'explanation'
-                  ? 'bg-neutral-800 text-white font-semibold'
-                  : 'text-neutral-400 hover:text-neutral-200'
-              }`}
+              onClick={() => setIsZenMode(!isZenMode)}
+              className="p-1.5 rounded-lg bg-neutral-900/80 border border-white/10 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 transition-all"
+              title={isZenMode ? "Exit Zen Mode" : "Zen Mode"}
             >
-              <HelpCircle className="w-3 h-3" />
-              <span className="hidden sm:inline">Intuition</span>
+              {isZenMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
           </div>
-
-          {/* Zen Mode Button */}
-          <button
-            onClick={() => setIsZenMode(!isZenMode)}
-            className="p-1.5 rounded-lg bg-neutral-900/80 border border-white/10 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 transition-all"
-            title={isZenMode ? "Exit Zen Mode" : "Zen Mode"}
-          >
-            {isZenMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
         </div>
       </div>
 
@@ -314,46 +335,80 @@ export default function VisualizerArena({
           </div>
         )}
 
-        {/* Explanation Mode */}
+        {/* Intuition & Problem Statement Tab */}
         {activeTab === 'explanation' && (
-          <div className="flex-1 p-6 overflow-y-auto max-w-3xl mx-auto space-y-6">
-            {/* Quick Summary Card */}
-            <div className="p-5 rounded-xl bg-neutral-900/70 border border-white/10 backdrop-blur-md">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-brand-400 mb-2">
-                Problem Statement
-              </h3>
-              <p className="text-neutral-300 text-sm leading-relaxed">
-                {problem.summary}
-              </p>
-            </div>
-
-            {/* Layman Intuition Card */}
-            <div className="p-5 rounded-xl bg-neutral-900/70 border border-brand-500/20 backdrop-blur-md relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl pointer-events-none" />
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-emerald-400 mb-2 flex items-center gap-2">
-                <Sparkles className="w-4 h-4" /> The "Aha!" Moment (Layman's Terms)
-              </h3>
-              <p className="text-neutral-300 text-sm leading-relaxed">
-                {problem.laymanExplanation}
-              </p>
-            </div>
-
-            {/* Complexity & Edge Cases */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-neutral-900/50 border border-white/5">
-                <h4 className="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-2">
-                  Time Complexity
-                </h4>
-                <div className="text-xl font-mono font-bold text-brand-400">{problem.timeComplexity}</div>
-                <p className="text-xs text-neutral-400 mt-1">Single pass linear traversal ensures optimum execution.</p>
+          <div className="flex-1 p-5 sm:p-6 overflow-y-auto max-w-4xl mx-auto space-y-5">
+            {/* 1. Layman's Terms Card (Fetched from visual explanation-panel) */}
+            <div className="p-5 rounded-2xl bg-neutral-900/80 border border-brand-500/30 backdrop-blur-md relative overflow-hidden shadow-glow-emerald">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-emerald-400 mb-3 pb-2 border-b border-white/5">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span>How It Works (Layman's Terms)</span>
               </div>
 
-              <div className="p-4 rounded-xl bg-neutral-900/50 border border-white/5">
-                <h4 className="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-2">
-                  Space Complexity
-                </h4>
-                <div className="text-xl font-mono font-bold text-cyan-400">{problem.spaceComplexity}</div>
-                <p className="text-xs text-neutral-400 mt-1">Memory proportional to distinct elements stored.</p>
+              {problem.laymanHtml ? (
+                <div
+                  className="layman-content"
+                  dangerouslySetInnerHTML={{ __html: problem.laymanHtml }}
+                />
+              ) : (
+                <p className="text-neutral-300 text-sm leading-relaxed">
+                  {problem.laymanExplanation || problem.shortDescription}
+                </p>
+              )}
+            </div>
+
+            {/* 2. Full Problem Statement (Fetched from Python Solution Comment before class Solution) */}
+            <div className="p-5 rounded-2xl bg-neutral-900/70 border border-white/10 backdrop-blur-md">
+              <div className="flex items-center justify-between pb-2 mb-3 border-b border-white/5">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-400">
+                  <Code2 className="w-4 h-4 text-brand-400" />
+                  <span>Problem Statement (Python Solution Specification)</span>
+                </div>
+                <span className="text-[10px] font-mono text-neutral-400">
+                  python/{problem.num}
+                </span>
+              </div>
+
+              <div className="bg-neutral-950/80 p-4 rounded-xl border border-white/5 max-h-72 overflow-y-auto font-mono text-xs text-neutral-300 whitespace-pre-wrap leading-relaxed">
+                {problem.fullProblemStatement || problem.shortDescription}
+              </div>
+            </div>
+
+            {/* 3. Complexity Analysis Card */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-neutral-900/60 border border-white/5 flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-brand-500/10 text-brand-400 font-mono text-sm font-bold">
+                  ⏱️
+                </div>
+                <div>
+                  <h4 className="text-xs uppercase tracking-wider text-neutral-400 font-semibold">
+                    Time Complexity
+                  </h4>
+                  <div className="text-lg font-mono font-bold text-brand-300 mt-0.5">
+                    {problem.timeComplexity}
+                  </div>
+                  <p className="text-[11px] text-neutral-400 mt-1">
+                    Optimal algorithm runtime matching the NeetCode visual benchmark.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-neutral-900/60 border border-white/5 flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 font-mono text-sm font-bold">
+                  💾
+                </div>
+                <div>
+                  <h4 className="text-xs uppercase tracking-wider text-neutral-400 font-semibold">
+                    Space Complexity
+                  </h4>
+                  <div className="text-lg font-mono font-bold text-cyan-300 mt-0.5">
+                    {problem.spaceComplexity}
+                  </div>
+                  <p className="text-[11px] text-neutral-400 mt-1">
+                    Auxiliary memory allocated for data structures.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

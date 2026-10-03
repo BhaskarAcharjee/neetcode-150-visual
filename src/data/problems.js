@@ -944,23 +944,31 @@ class Solution {
 // Combine raw with the full list of remaining problems from the original 193 files so the entire NeetCode 150+ roadmap is available!
 import { ALL_CATALOG } from './catalog';
 import { SOLUTIONS_DATA } from './solutionsData';
+import { PROBLEMS_META } from './problemsMeta';
 
 export const ALL_PROBLEMS = (() => {
   const map = new Map();
   
-  // Register curated raw problems
+  // Register curated raw problems with mapped visual metadata
   PROBLEMS_RAW.forEach(p => {
     const sol = SOLUTIONS_DATA[p.num];
+    const meta = PROBLEMS_META[p.num];
     map.set(p.num, {
       ...p,
+      shortDescription: meta?.shortDescription || p.summary,
+      timeComplexity: meta?.timeComplexity || p.timeComplexity,
+      spaceComplexity: meta?.spaceComplexity || p.spaceComplexity,
+      laymanHtml: meta?.laymanHtml || "",
+      fullProblemStatement: meta?.fullProblemStatement || p.summary,
       pythonCode: p.pythonCode || sol?.python || "",
       javaCode: p.javaCode || sol?.java || "",
     });
   });
 
-  // Populate all 193 catalog problems with actual Python and Java solutions
+  // Populate all 193 catalog problems with actual Python and Java solutions & visual metadata
   ALL_CATALOG.forEach(item => {
     const sol = SOLUTIONS_DATA[item.num];
+    const meta = PROBLEMS_META[item.num];
     if (!map.has(item.num)) {
       map.set(item.num, {
         num: item.num,
@@ -968,13 +976,16 @@ export const ALL_PROBLEMS = (() => {
         category: item.category,
         categoryId: item.categoryId || "arrays",
         difficulty: item.difficulty || (parseInt(item.num) % 3 === 0 ? "Hard" : parseInt(item.num) % 2 === 0 ? "Medium" : "Easy"),
-        timeComplexity: "O(n)",
-        spaceComplexity: "O(1)",
+        timeComplexity: meta?.timeComplexity || "O(n)",
+        spaceComplexity: meta?.spaceComplexity || "O(1)",
+        shortDescription: meta?.shortDescription || `Solve the ${item.name} problem efficiently using optimal algorithms and data structures.`,
+        laymanHtml: meta?.laymanHtml || "",
+        fullProblemStatement: meta?.fullProblemStatement || `Standard NeetCode algorithm: ${item.name}.`,
         tags: [item.category.split(" ")[0] || "Algorithm"],
         file: item.file,
         interactiveType: "two-sum",
-        summary: `Standard NeetCode algorithm: ${item.name}. Interactive step visualization available in embed arena.`,
-        laymanExplanation: `An essential problem in ${item.category}. Explore the step-by-step state changes using the visualizer below.`,
+        summary: meta?.shortDescription || `Standard NeetCode algorithm: ${item.name}.`,
+        laymanExplanation: meta?.shortDescription || `An essential problem in ${item.category}.`,
         initialData: { nums: [1, 3, 5, 7, 9], target: 8 },
         testCases: [
           { input: `input for ${item.name}`, expected: "Optimal" }
@@ -983,8 +994,15 @@ export const ALL_PROBLEMS = (() => {
         javaCode: sol?.java || `// Solution for ${item.num}: ${item.name}\nclass Solution {\n    public void solve(int[] data) {\n    }\n}`
       });
     } else {
-      // Ensure existing item has javaCode & pythonCode updated if missing or stubbed
+      // Ensure existing item has javaCode & pythonCode & metadata updated if missing or stubbed
       const existing = map.get(item.num);
+      if (meta) {
+        existing.shortDescription = meta.shortDescription || existing.shortDescription;
+        existing.timeComplexity = meta.timeComplexity || existing.timeComplexity;
+        existing.spaceComplexity = meta.spaceComplexity || existing.spaceComplexity;
+        existing.laymanHtml = meta.laymanHtml || existing.laymanHtml;
+        existing.fullProblemStatement = meta.fullProblemStatement || existing.fullProblemStatement;
+      }
       if ((!existing.javaCode || existing.javaCode.includes('// Implementation for')) && sol?.java) {
         existing.javaCode = sol.java;
       }
