@@ -21,9 +21,21 @@ This repository contains **193 Python** 🐍 and **168 Java** ☕ solutions to L
 | NeetCode 150 🌊 | 150 |
 | Visualizations 📊 | 193 |
 
-**👉 Open index.html** to browse all problems with interactive visualizations.
+### Running the Modern React Dashboard ⚡
 
-![main](main.png)
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Run local development server
+npm run dev
+
+# 3. Build optimized production bundle
+npm run build
+```
+
+Once running, access the dashboard at `http://localhost:5173`.
+*(Note: Legacy static viewer is preserved at `index.legacy.html`)*
 
 ## Problem Categories 📋
 
