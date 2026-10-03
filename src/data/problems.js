@@ -943,12 +943,24 @@ class Solution {
 
 // Combine raw with the full list of remaining problems from the original 193 files so the entire NeetCode 150+ roadmap is available!
 import { ALL_CATALOG } from './catalog';
+import { SOLUTIONS_DATA } from './solutionsData';
 
 export const ALL_PROBLEMS = (() => {
   const map = new Map();
-  PROBLEMS_RAW.forEach(p => map.set(p.num, p));
+  
+  // Register curated raw problems
+  PROBLEMS_RAW.forEach(p => {
+    const sol = SOLUTIONS_DATA[p.num];
+    map.set(p.num, {
+      ...p,
+      pythonCode: p.pythonCode || sol?.python || "",
+      javaCode: p.javaCode || sol?.java || "",
+    });
+  });
 
+  // Populate all 193 catalog problems with actual Python and Java solutions
   ALL_CATALOG.forEach(item => {
+    const sol = SOLUTIONS_DATA[item.num];
     if (!map.has(item.num)) {
       map.set(item.num, {
         num: item.num,
@@ -967,9 +979,18 @@ export const ALL_PROBLEMS = (() => {
         testCases: [
           { input: `input for ${item.name}`, expected: "Optimal" }
         ],
-        pythonCode: `# Solution for ${item.num}: ${item.name}\nclass Solution:\n    def solve(self, data):\n        # Implementation for ${item.name}\n        pass`,
-        javaCode: `// Solution for ${item.num}: ${item.name}\nclass Solution {\n    public void solve(int[] data) {\n        // Implementation for ${item.name}\n    }\n}`
+        pythonCode: sol?.python || `# Solution for ${item.num}: ${item.name}\nclass Solution:\n    def solve(self, data):\n        pass`,
+        javaCode: sol?.java || `// Solution for ${item.num}: ${item.name}\nclass Solution {\n    public void solve(int[] data) {\n    }\n}`
       });
+    } else {
+      // Ensure existing item has javaCode & pythonCode updated if missing or stubbed
+      const existing = map.get(item.num);
+      if ((!existing.javaCode || existing.javaCode.includes('// Implementation for')) && sol?.java) {
+        existing.javaCode = sol.java;
+      }
+      if ((!existing.pythonCode || existing.pythonCode.includes('# Implementation for')) && sol?.python) {
+        existing.pythonCode = sol.python;
+      }
     }
   });
 
