@@ -226,8 +226,8 @@ export function getProblemSolutions(problem, language) {
 
     files.push({
       id: 'manual',
-      filename: 'Solution.java',
-      label: 'Solution.java',
+      filename: 'solution.java',
+      label: 'solution.java',
       tag: 'Manual Editor',
       isManual: true,
       code: userCode,
@@ -237,19 +237,19 @@ export function getProblemSolutions(problem, language) {
     // 2. Reference solution1.java
     files.push({
       id: 'solution1',
-      filename: 'Solution1.java',
-      label: 'Solution1.java',
+      filename: 'solution1.java',
+      label: 'solution1.java',
       tag: 'Optimal Approach',
       isManual: false,
       code: fullJava,
     });
 
-    // 3. If Two Sum, add Solution2.java
+    // 3. If Two Sum, add solution2.java
     if (num === '0001') {
       files.push({
         id: 'solution2',
-        filename: 'Solution2.java',
-        label: 'Solution2.java',
+        filename: 'solution2.java',
+        label: 'solution2.java',
         tag: 'Two-Pass Hash Map',
         isManual: false,
         code: `import java.util.HashMap;\nimport java.util.Map;\n\nclass Solution {\n    public int[] twoSum(int[] nums, int target) {\n        Map<Integer, Integer> map = new HashMap<>();\n        for (int i = 0; i < nums.length; i++) {\n            map.put(nums[i], i);\n        }\n        \n        for (int i = 0; i < nums.length; i++) {\n            int complement = target - nums[i];\n            if (map.containsKey(complement) && map.get(complement) != i) {\n                return new int[] { i, map.get(complement) };\n            }\n        }\n        \n        return new int[0];\n    }\n}\n`,

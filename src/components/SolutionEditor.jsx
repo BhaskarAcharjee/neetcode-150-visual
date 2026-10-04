@@ -231,9 +231,9 @@ export default function SolutionEditor({ problem, onSolveSuccess, activeCodeLine
       }`}
     >
       {/* Top IDE Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-neutral-950/90 border-b border-surface-border backdrop-blur-md select-none">
-        {/* Left: Window Dots + Language Dropdown + Solution File Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center justify-between px-3 py-2 bg-neutral-950/90 border-b border-surface-border backdrop-blur-md select-none relative z-30">
+        {/* Left: Language Selector + Quick Pills + Solution File Tabs */}
+        <div className="flex items-center gap-2 flex-wrap">
           {/* OS Window Dots */}
           <div className="hidden sm:flex items-center gap-1.5 mr-1">
             <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
@@ -241,21 +241,23 @@ export default function SolutionEditor({ problem, onSolveSuccess, activeCodeLine
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
           </div>
 
-          {/* Language Selector Dropdown */}
+          {/* Language Selector Dropdown (Unclipped & Accessible) */}
           <div className="relative" ref={langDropdownRef}>
             <button
               onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-900 border border-white/10 hover:border-brand-500/40 text-xs font-semibold text-neutral-200 transition-all shadow-inner"
-              title="Select Programming Language"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-900 border border-white/10 hover:border-brand-500/40 text-xs font-semibold text-neutral-200 transition-all shadow-inner group"
+              title="Change Programming Language"
             >
               <Code2 className="w-3.5 h-3.5 text-brand-400" />
-              <span className="capitalize">{language}</span>
-              <ChevronDown className="w-3 h-3 text-neutral-400" />
+              <span className="capitalize">
+                {language === 'python' ? 'Python' : language === 'java' ? 'Java' : 'C++'}
+              </span>
+              <ChevronDown className="w-3 h-3 text-neutral-400 group-hover:text-white transition-colors" />
             </button>
 
             {/* Dropdown Menu */}
             {isLangDropdownOpen && (
-              <div className="absolute left-0 top-full mt-1.5 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-2xl p-1 z-50 font-sans">
+              <div className="absolute left-0 top-full mt-1.5 w-48 bg-neutral-900/95 border border-white/15 rounded-xl shadow-2xl p-1 z-50 font-sans backdrop-blur-xl">
                 {LANGUAGES.map((lang) => (
                   <button
                     key={lang.id}
@@ -263,6 +265,7 @@ export default function SolutionEditor({ problem, onSolveSuccess, activeCodeLine
                     onClick={() => {
                       if (lang.available) {
                         setLanguage(lang.id);
+                        setSelectedFileId('manual');
                         setIsLangDropdownOpen(false);
                       }
                     }}
@@ -287,9 +290,13 @@ export default function SolutionEditor({ problem, onSolveSuccess, activeCodeLine
                       <span>{lang.name}</span>
                     </div>
 
-                    {!lang.available && (
+                    {!lang.available ? (
                       <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400 border border-white/5">
                         Coming Soon
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-neutral-500 font-mono">
+                        {lang.ext}
                       </span>
                     )}
                   </button>
@@ -298,17 +305,61 @@ export default function SolutionEditor({ problem, onSolveSuccess, activeCodeLine
             )}
           </div>
 
-          <div className="h-4 w-[1px] bg-white/10 mx-0.5" />
+          {/* Quick Language Toggle Pills */}
+          <div className="flex items-center p-0.5 rounded-lg bg-neutral-900 border border-white/10 text-xs">
+            <button
+              onClick={() => {
+                setLanguage('python');
+                setSelectedFileId('manual');
+              }}
+              className={`px-2 py-0.5 rounded-md font-semibold font-mono text-[11px] transition-all flex items-center gap-1 ${
+                language === 'python'
+                  ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 shadow-sm'
+                  : 'text-neutral-400 hover:text-neutral-200'
+              }`}
+              title="Switch to Python"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
+              <span>Python</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setLanguage('java');
+                setSelectedFileId('manual');
+              }}
+              className={`px-2 py-0.5 rounded-md font-semibold font-mono text-[11px] transition-all flex items-center gap-1 ${
+                language === 'java'
+                  ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40 shadow-sm'
+                  : 'text-neutral-400 hover:text-neutral-200'
+              }`}
+              title="Switch to Java"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+              <span>Java</span>
+            </button>
+
+            <button
+              disabled
+              className="px-2 py-0.5 rounded-md font-mono text-[11px] text-neutral-500 cursor-not-allowed opacity-60 flex items-center gap-1"
+              title="C++ Coming Soon"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-neutral-600" />
+              <span>C++</span>
+            </button>
+          </div>
+
+          <div className="h-4 w-[1px] bg-white/10 mx-0.5 hidden sm:block" />
 
           {/* Solution File Tabs: solution.py (Manual), solution1.py, solution2.py... */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
             {solutions.map((sol) => {
               const isSelected = selectedFileId === sol.id;
               return (
                 <button
                   key={sol.id}
                   onClick={() => setSelectedFileId(sol.id)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono transition-all ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono transition-all flex-shrink-0 ${
                     isSelected
                       ? 'bg-neutral-900 text-brand-300 font-bold border border-brand-500/30 shadow-sm'
                       : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900/50'
