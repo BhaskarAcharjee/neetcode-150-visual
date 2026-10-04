@@ -55,8 +55,11 @@ export default function SidebarRoadmap({
   onSelectProblem,
   solvedSet,
   onToggleSolved,
-  streak = 7,
-  xp = 1450,
+  streak = 0,
+  isActiveToday = false,
+  xp = 0,
+  levelInfo,
+  onOpenResetModal,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState('ALL'); // 'ALL' | 'Easy' | 'Medium' | 'Hard'
@@ -153,8 +156,31 @@ export default function SidebarRoadmap({
           </div>
 
           {/* Daily Streak Badge */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold font-mono">
-            <Flame className="w-4 h-4 fill-orange-400 text-orange-400 animate-pulse" />
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold font-mono transition-all ${
+              streak > 0 && isActiveToday
+                ? 'bg-orange-500/15 border border-orange-500/30 text-orange-400 shadow-sm'
+                : streak > 0
+                ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+                : 'bg-neutral-900 border border-white/5 text-neutral-500'
+            }`}
+            title={
+              streak > 0 && isActiveToday
+                ? `${streak} day streak! You've practiced today.`
+                : streak > 0
+                ? `${streak} day streak. Practice today to maintain it!`
+                : 'No active streak. Solve a problem to start!'
+            }
+          >
+            <Flame
+              className={`w-4 h-4 ${
+                streak > 0 && isActiveToday
+                  ? 'fill-orange-400 text-orange-400 animate-pulse'
+                  : streak > 0
+                  ? 'text-amber-400'
+                  : 'text-neutral-500'
+              }`}
+            />
             <span>{streak}d Streak</span>
           </div>
         </div>
@@ -163,9 +189,20 @@ export default function SidebarRoadmap({
         <div className="bg-neutral-900/80 p-3 rounded-xl border border-white/5 space-y-2">
           <div className="flex items-center justify-between text-xs">
             <span className="text-neutral-400 font-medium">Roadmap Progress</span>
-            <span className="font-mono font-bold text-brand-400">
-              {totalSolved} <span className="text-neutral-500 font-normal">/ {problems.length} ({progressPercent}%)</span>
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-bold text-brand-400">
+                {totalSolved} <span className="text-neutral-500 font-normal">/ {problems.length} ({progressPercent}%)</span>
+              </span>
+              {onOpenResetModal && (
+                <button
+                  onClick={onOpenResetModal}
+                  className="text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 p-1 rounded transition-colors"
+                  title="Reset All Progress"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="w-full h-2 bg-neutral-950 rounded-full overflow-hidden border border-white/5 p-0.5">
@@ -179,9 +216,20 @@ export default function SidebarRoadmap({
           {/* XP & Level subtitle */}
           <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 pt-0.5">
             <span className="flex items-center gap-1 text-yellow-400">
-              <Trophy className="w-3 h-3" /> Lv. {Math.floor(xp / 250) + 1} Architect
+              <Trophy className="w-3 h-3" /> Lv. {levelInfo?.level || 1} {levelInfo?.title || 'Novice'}
             </span>
             <span>{xp} XP</span>
+          </div>
+
+          {/* Level Progress Sub-bar */}
+          <div
+            className="w-full h-1 bg-neutral-950 rounded-full overflow-hidden border border-white/5"
+            title={`${levelInfo?.currentLevelXp || 0} / ${levelInfo?.nextLevelXp || 250} XP to Lv. ${(levelInfo?.level || 1) + 1}`}
+          >
+            <div
+              className="h-full bg-gradient-to-r from-yellow-500 to-amber-400 rounded-full transition-all duration-300"
+              style={{ width: `${levelInfo?.percent || 0}%` }}
+            />
           </div>
         </div>
       </div>
@@ -356,6 +404,21 @@ export default function SidebarRoadmap({
           );
         })}
       </div>
+
+      {/* Sidebar Footer with Reset Progress Action */}
+      {onOpenResetModal && (
+        <div className="p-2.5 border-t border-surface-border bg-neutral-950/80 backdrop-blur-sm flex items-center justify-between text-xs text-neutral-500 mt-auto flex-shrink-0">
+          <span className="font-mono text-[11px] text-neutral-500">NeetCode 150 Tracker</span>
+          <button
+            onClick={onOpenResetModal}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all font-mono text-[11px]"
+            title="Reset all progress, streak, and XP"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Reset Progress</span>
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

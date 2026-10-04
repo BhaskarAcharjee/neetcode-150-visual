@@ -14,8 +14,11 @@ export default function DashboardLayout({
   solvedSet,
   onToggleSolved,
   streak,
+  isActiveToday,
   xp,
-  onSolveSuccess
+  levelInfo,
+  onSolveSuccess,
+  onOpenResetModal,
 }) {
   const [layoutMode, setLayoutMode] = useState('split'); // 'split' | 'visualizer' | 'editor'
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -30,12 +33,15 @@ export default function DashboardLayout({
       {/* Top Navigation Bar */}
       <Navbar
         streak={streak}
+        isActiveToday={isActiveToday}
         xp={xp}
+        levelInfo={levelInfo}
         solvedCount={solvedSet.size}
         totalCount={problems.length}
         layoutMode={layoutMode}
         setLayoutMode={setLayoutMode}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenResetModal={onOpenResetModal}
       />
 
       {/* Main Workspace */}
@@ -54,7 +60,10 @@ export default function DashboardLayout({
               solvedSet={solvedSet}
               onToggleSolved={onToggleSolved}
               streak={streak}
+              isActiveToday={isActiveToday}
               xp={xp}
+              levelInfo={levelInfo}
+              onOpenResetModal={onOpenResetModal}
             />
           </div>
 
@@ -96,7 +105,13 @@ export default function DashboardLayout({
                   solvedSet={solvedSet}
                   onToggleSolved={onToggleSolved}
                   streak={streak}
+                  isActiveToday={isActiveToday}
                   xp={xp}
+                  levelInfo={levelInfo}
+                  onOpenResetModal={() => {
+                    setIsMobileSidebarOpen(false);
+                    onOpenResetModal();
+                  }}
                 />
               </div>
             </div>
@@ -169,6 +184,7 @@ export default function DashboardLayout({
         onClose={setIsSearchOpen}
         problems={problems}
         onSelectProblem={onSelectProblem}
+        onOpenResetModal={onOpenResetModal}
       />
     </div>
   );

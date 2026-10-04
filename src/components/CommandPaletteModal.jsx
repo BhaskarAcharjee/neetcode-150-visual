@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Hash, ArrowRight, CornerDownLeft } from 'lucide-react';
+import { Search, X, Hash, ArrowRight, CornerDownLeft, RotateCcw } from 'lucide-react';
 
 export default function CommandPaletteModal({
   isOpen,
   onClose,
   problems,
-  onSelectProblem
+  onSelectProblem,
+  onOpenResetModal,
 }) {
   const [query, setQuery] = useState('');
 
@@ -65,7 +66,35 @@ export default function CommandPaletteModal({
 
           {/* Results List */}
           <div className="p-2 max-h-80 overflow-y-auto divide-y divide-white/5">
-            {filtered.length === 0 ? (
+            {/* Quick Action: Reset Progress */}
+            {onOpenResetModal && (query.toLowerCase().includes('reset') || query.toLowerCase().includes('clear')) && (
+              <div
+                onClick={() => {
+                  onClose(false);
+                  onOpenResetModal();
+                }}
+                className="flex items-center justify-between p-3 rounded-xl cursor-pointer hover:bg-rose-500/10 border border-rose-500/20 text-rose-300 transition-colors group mb-1"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-400">
+                    <RotateCcw className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-rose-200 group-hover:text-rose-100">
+                      Reset All Progress
+                    </div>
+                    <div className="text-[11px] text-neutral-400 font-mono">
+                      Clear all solved problems, streak, and XP
+                    </div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 uppercase font-bold">
+                  Action
+                </span>
+              </div>
+            )}
+
+            {filtered.length === 0 && !(onOpenResetModal && (query.toLowerCase().includes('reset') || query.toLowerCase().includes('clear'))) ? (
               <div className="p-8 text-center text-xs text-neutral-500 font-mono">
                 No matching problems found for "{query}".
               </div>

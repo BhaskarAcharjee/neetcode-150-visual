@@ -10,17 +10,21 @@ import {
   Eye,
   Github,
   Command,
-  SlidersHorizontal
+  SlidersHorizontal,
+  RotateCcw
 } from 'lucide-react';
 
 export default function Navbar({
-  streak = 7,
-  xp = 1450,
+  streak = 0,
+  isActiveToday = false,
+  xp = 0,
+  levelInfo,
   solvedCount = 0,
   totalCount = 150,
   layoutMode, // 'split' | 'visualizer' | 'editor'
   setLayoutMode,
-  onOpenSearch
+  onOpenSearch,
+  onOpenResetModal
 }) {
   return (
     <header className="h-14 bg-surface-card/90 border-b border-surface-border px-4 lg:px-6 flex items-center justify-between backdrop-blur-xl z-20 select-none">
@@ -68,16 +72,53 @@ export default function Navbar({
       {/* Right: Gamification Badges & Layout Controls */}
       <div className="flex items-center gap-3">
         {/* Streak Badge */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold font-mono shadow-sm">
-          <Flame className="w-4 h-4 fill-orange-400 text-orange-400" />
+        <div
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold font-mono transition-all ${
+            streak > 0 && isActiveToday
+              ? 'bg-orange-500/15 border border-orange-500/30 text-orange-400 shadow-sm'
+              : streak > 0
+              ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+              : 'bg-neutral-900 border border-white/5 text-neutral-500'
+          }`}
+          title={
+            streak > 0 && isActiveToday
+              ? `${streak} day streak! You've practiced today.`
+              : streak > 0
+              ? `${streak} day streak. Practice today to maintain it!`
+              : 'No active streak. Solve a problem to begin your streak!'
+          }
+        >
+          <Flame
+            className={`w-4 h-4 ${
+              streak > 0 && isActiveToday
+                ? 'fill-orange-400 text-orange-400 animate-pulse'
+                : streak > 0
+                ? 'text-amber-400'
+                : 'text-neutral-500'
+            }`}
+          />
           <span>{streak}d</span>
         </div>
 
         {/* XP Badge */}
-        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-xs font-mono font-bold">
+        <div
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-xs font-mono font-bold"
+          title={`${xp} Total XP · ${levelInfo?.title || 'Novice'} (Level ${levelInfo?.level || 1})`}
+        >
           <Trophy className="w-3.5 h-3.5 text-yellow-400" />
           <span>{xp} XP</span>
         </div>
+
+        {/* Reset Progress Button */}
+        {onOpenResetModal && (
+          <button
+            onClick={onOpenResetModal}
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all"
+            title="Reset all progress, streak and XP"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+        )}
 
         {/* Layout Mode Selector */}
         <div className="hidden lg:flex items-center p-0.5 rounded-lg bg-neutral-900/90 border border-white/10 text-xs">
