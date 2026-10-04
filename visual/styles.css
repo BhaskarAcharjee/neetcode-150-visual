@@ -137,28 +137,13 @@ body {
 }
 
 /* ==========================================
-   Code Section
+   Code Section (Hidden in Legacy D3 Visualizer)
    ========================================== */
-.code-section {
-    background: white;
-    border-radius: 16px;
-    padding: 25px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-}
-
-.code-section h3 {
-    color: #1e293b;
-    margin-bottom: 15px;
-    font-size: 1.2em;
-}
-
+.code-section,
+section.code-section,
+div.code-section,
 .code-block {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 20px;
-    overflow-x: auto;
+    display: none !important;
 }
 
 .code-block pre {

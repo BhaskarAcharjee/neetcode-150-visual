@@ -945,6 +945,7 @@ class Solution {
 import { ALL_CATALOG } from './catalog.js';
 import { SOLUTIONS_DATA } from './solutionsData.js';
 import { PROBLEMS_META } from './problemsMeta.js';
+import { PROBLEM_COMPANIES } from './companyTags.js';
 
 function getInitialDataForCategory(cat) {
   switch (cat) {
@@ -978,8 +979,10 @@ export const ALL_PROBLEMS = (() => {
   PROBLEMS_RAW.forEach(p => {
     const sol = SOLUTIONS_DATA[p.num];
     const meta = PROBLEMS_META[p.num];
+    const comps = PROBLEM_COMPANIES[p.num] || [];
     map.set(p.num, {
       ...p,
+      companies: comps,
       shortDescription: meta?.shortDescription || p.summary,
       timeComplexity: meta?.timeComplexity || p.timeComplexity,
       spaceComplexity: meta?.spaceComplexity || p.spaceComplexity,
@@ -995,6 +998,7 @@ export const ALL_PROBLEMS = (() => {
   ALL_CATALOG.forEach(item => {
     const sol = SOLUTIONS_DATA[item.num];
     const meta = PROBLEMS_META[item.num];
+    const comps = PROBLEM_COMPANIES[item.num] || [];
     if (!map.has(item.num)) {
       map.set(item.num, {
         num: item.num,
@@ -1008,6 +1012,7 @@ export const ALL_PROBLEMS = (() => {
         laymanHtml: meta?.laymanHtml || "",
         fullProblemStatement: meta?.fullProblemStatement || `Standard NeetCode algorithm: ${item.name}.`,
         tags: (meta?.tags && meta.tags.length > 0) ? meta.tags : [item.category.split(" ")[0] || "Algorithm"],
+        companies: comps,
         file: item.file,
         interactiveType: item.categoryId || "arrays",
         summary: meta?.shortDescription || `Standard NeetCode algorithm: ${item.name}.`,
@@ -1022,6 +1027,7 @@ export const ALL_PROBLEMS = (() => {
     } else {
       // Ensure existing item has javaCode & pythonCode & metadata updated
       const existing = map.get(item.num);
+      existing.companies = comps;
       if (meta) {
         existing.shortDescription = meta.shortDescription || existing.shortDescription;
         existing.timeComplexity = meta.timeComplexity || existing.timeComplexity;

@@ -21,7 +21,8 @@ import {
   HelpCircleIcon,
   CheckCircle2,
   XCircle,
-  Activity
+  Activity,
+  Building2
 } from 'lucide-react';
 import { triggerConfetti } from '../utils/confetti';
 import { generateExecutionTrace } from '../engine/stepEngine';
@@ -305,6 +306,39 @@ export default function VisualizerArena({
             {renderFormattedText(problem.shortDescription)}
           </div>
         )}
+
+        {/* Row 2.5: Company Badges & Topic Tags */}
+        <div className="flex flex-col gap-1.5 pt-0.5">
+          {problem.companies && problem.companies.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-mono text-neutral-400 font-semibold mr-1 flex items-center gap-1">
+                <Building2 className="w-3.5 h-3.5 text-amber-400" /> Asked by:
+              </span>
+              {problem.companies.map((c, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-mono font-medium bg-neutral-900/90 border border-amber-500/25 text-amber-300 hover:border-amber-400/50 hover:bg-amber-500/10 transition-all shadow-sm"
+                >
+                  <span>{c.company}</span>
+                  <span className="text-amber-400/80 text-[10px] font-bold">×{c.count}</span>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {problem.tags && problem.tags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {problem.tags.map((tag, idx) => (
+                <span
+                  key={idx}
+                  className="meta-tag inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-mono font-medium bg-neutral-900/70 border border-white/10 text-neutral-300 shadow-sm"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Row 3: Action Buttons & Mode Switcher Tabs */}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-white/5">
@@ -668,29 +702,47 @@ export default function VisualizerArena({
         )}
 
         {/* Embed Mode: Loads legacy HTML visualization */}
-        {activeTab === 'embed' && (
-          <div className="w-full h-full flex flex-col bg-neutral-950">
-            <div className="flex items-center justify-between px-4 py-2 bg-neutral-900 border-b border-white/5 text-xs text-neutral-400">
-              <span className="flex items-center gap-1.5">
-                <Eye className="w-3.5 h-3.5 text-brand-400" />
-                Viewing Native D3/Canvas Animation ({problem.file})
-              </span>
-              <a
-                href={problem.file}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1 text-brand-400 hover:text-brand-300 font-medium"
-              >
-                Open directly <ExternalLink className="w-3 h-3" />
-              </a>
+        {activeTab === 'embed' && (() => {
+          const cleanFile = problem.file?.replace(/^\//, '') || '';
+          const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+          const visualUrl = baseUrl ? `${baseUrl}/${cleanFile}` : `/${cleanFile}`;
+
+          return (
+            <div className="w-full h-full flex flex-col bg-neutral-950">
+              <div className="flex items-center justify-between px-4 py-2 bg-neutral-900 border-b border-white/5 text-xs text-neutral-400">
+                <span className="flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-brand-400" />
+                  Viewing Native D3/Canvas Animation ({problem.file})
+                </span>
+                <a
+                  href={visualUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 text-brand-400 hover:text-brand-300 font-medium"
+                >
+                  Open directly <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+              <iframe
+                src={visualUrl}
+                title={problem.name}
+                className="w-full flex-1 border-none bg-neutral-950"
+                onLoad={(e) => {
+                  try {
+                    const doc = e.target.contentDocument || e.target.contentWindow?.document;
+                    if (doc) {
+                      const codeSections = doc.querySelectorAll('.code-section, section.code-section, div.code-section, .code-block');
+                      codeSections.forEach((el) => el.remove());
+                      const style = doc.createElement('style');
+                      style.textContent = '.code-section, section.code-section, div.code-section, .code-block { display: none !important; }';
+                      doc.head.appendChild(style);
+                    }
+                  } catch (err) {}
+                }}
+              />
             </div>
-            <iframe
-              src={problem.file}
-              title={problem.name}
-              className="w-full flex-1 border-none bg-neutral-950"
-            />
-          </div>
-        )}
+          );
+        })()}
 
         {/* Intuition & Problem Statement Tab */}
         {activeTab === 'explanation' && (
