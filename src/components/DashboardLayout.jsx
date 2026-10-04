@@ -21,6 +21,7 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [activeCodeLine, setActiveCodeLine] = useState({ python: null, java: null });
 
   const isSolved = solvedSet.has(selectedProblem?.num);
 
@@ -137,6 +138,7 @@ export default function DashboardLayout({
                   problem={selectedProblem}
                   isSolved={isSolved}
                   onToggleSolved={onToggleSolved}
+                  onActiveLineChange={setActiveCodeLine}
                 />
               </div>
             )}
@@ -153,6 +155,7 @@ export default function DashboardLayout({
                 <SolutionEditor
                   problem={selectedProblem}
                   onSolveSuccess={onSolveSuccess}
+                  activeCodeLine={activeCodeLine}
                 />
               </div>
             )}

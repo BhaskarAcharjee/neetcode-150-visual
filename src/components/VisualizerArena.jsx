@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play,
@@ -16,13 +16,27 @@ import {
   Eye,
   Sliders,
   Timer,
-  HardDrive
+  HardDrive,
+  SlidersHorizontal,
+  HelpCircleIcon,
+  CheckCircle2,
+  XCircle,
+  Activity
 } from 'lucide-react';
-import TwoSumVisualizer from './visualizers/TwoSumVisualizer';
-import SlidingWindowVisualizer from './visualizers/SlidingWindowVisualizer';
-import TwoPointersVisualizer from './visualizers/TwoPointersVisualizer';
-import BinarySearchVisualizer from './visualizers/BinarySearchVisualizer';
 import { triggerConfetti } from '../utils/confetti';
+import { generateExecutionTrace } from '../engine/stepEngine';
+
+// Archetype Visualizer Components
+import ArrayViewer from './visualizers/archetypes/ArrayViewer';
+import TwoPointersViewer from './visualizers/archetypes/TwoPointersViewer';
+import SlidingWindowViewer from './visualizers/archetypes/SlidingWindowViewer';
+import BinarySearchViewer from './visualizers/archetypes/BinarySearchViewer';
+import StackViewer from './visualizers/archetypes/StackViewer';
+import LinkedListViewer from './visualizers/archetypes/LinkedListViewer';
+import TreeViewer from './visualizers/archetypes/TreeViewer';
+import MatrixViewer from './visualizers/archetypes/MatrixViewer';
+import DpTableViewer from './visualizers/archetypes/DpTableViewer';
+import BitRegisterViewer from './visualizers/archetypes/BitRegisterViewer';
 
 function renderFormattedText(text) {
   if (!text) return null;
@@ -63,28 +77,86 @@ export default function VisualizerArena({
   problem,
   isSolved,
   onToggleSolved,
+  onActiveLineChange
 }) {
   const [activeTab, setActiveTab] = useState('canvas'); // 'canvas' | 'embed' | 'explanation'
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [currentStep, setCurrentStep] = useState(0);
-  const [totalSteps, setTotalSteps] = useState(1);
   const [isZenMode, setIsZenMode] = useState(false);
 
+  // Custom Input State
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customInputText, setCustomInputText] = useState('');
+  const [customTargetText, setCustomTargetText] = useState('');
+  const [appliedCustomInput, setAppliedCustomInput] = useState(null);
+
+  // Quiz / Test Understanding State
+  const [isQuizMode, setIsQuizMode] = useState(true);
+  const [quizAnswerSelected, setQuizAnswerSelected] = useState(null);
+  const [quizAnswerStatus, setQuizAnswerStatus] = useState(null); // 'correct' | 'wrong'
+
+  // Generate deterministic trace for current problem and custom inputs
+  const { archetype, steps } = useMemo(() => {
+    return generateExecutionTrace(problem, appliedCustomInput || {});
+  }, [problem, appliedCustomInput]);
+
+  const totalSteps = steps.length;
+  const currentStepData = steps[currentStep] || steps[0];
+
+  // Synchronize active code line with side-by-side IDE
+  useEffect(() => {
+    if (onActiveLineChange && currentStepData?.codeLine) {
+      onActiveLineChange(currentStepData.codeLine);
+    }
+  }, [currentStepData, onActiveLineChange]);
+
   // Reset steps when problem changes
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentStep(0);
     setIsPlaying(false);
+    setAppliedCustomInput(null);
+    setQuizAnswerSelected(null);
+    setQuizAnswerStatus(null);
+    setShowCustomInput(false);
   }, [problem?.num]);
+
+  // Reset quiz selection on step change
+  useEffect(() => {
+    setQuizAnswerSelected(null);
+    setQuizAnswerStatus(null);
+  }, [currentStep]);
+
+  // Auto-play timer
+  useEffect(() => {
+    let timer = null;
+    if (isPlaying) {
+      // Pause if current step has an unanswered quiz in quiz mode
+      if (isQuizMode && currentStepData?.quiz && quizAnswerStatus === null) {
+        setIsPlaying(false);
+        return;
+      }
+
+      const delay = 1400 / speed;
+      timer = setTimeout(() => {
+        if (currentStep < totalSteps - 1) {
+          setCurrentStep((prev) => prev + 1);
+        } else {
+          setIsPlaying(false);
+        }
+      }, delay);
+    }
+    return () => clearTimeout(timer);
+  }, [isPlaying, speed, currentStep, totalSteps, isQuizMode, currentStepData, quizAnswerStatus]);
 
   const handleStepBack = () => {
     setIsPlaying(false);
-    setCurrentStep(prev => Math.max(0, prev - 1));
+    setCurrentStep((prev) => Math.max(0, prev - 1));
   };
 
   const handleStepForward = () => {
     setIsPlaying(false);
-    setCurrentStep(prev => Math.min(totalSteps - 1, prev + 1));
+    setCurrentStep((prev) => Math.min(totalSteps - 1, prev + 1));
   };
 
   const handleReset = () => {
@@ -106,36 +178,76 @@ export default function VisualizerArena({
     onToggleSolved(problem.num);
   };
 
-  // Determine which native interactive visualizer to display
-  const renderNativeVisualizer = () => {
+  const handleApplyCustomInput = () => {
+    try {
+      const custom = {};
+      if (customInputText.trim()) {
+        if (customInputText.includes('[') || customInputText.includes(',')) {
+          custom.nums = customInputText
+            .replace(/[\[\]]/g, '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .map(Number);
+        } else if (isNaN(Number(customInputText.trim()))) {
+          custom.s = customInputText.trim();
+        } else {
+          custom.n = Number(customInputText.trim());
+        }
+      }
+      if (customTargetText.trim()) {
+        custom.target = Number(customTargetText.trim());
+      }
+      setAppliedCustomInput(custom);
+      setCurrentStep(0);
+      setIsPlaying(false);
+      setShowCustomInput(false);
+      triggerConfetti();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleQuizAnswer = (optionIdx) => {
+    setQuizAnswerSelected(optionIdx);
+    if (optionIdx === currentStepData.quiz.answer) {
+      setQuizAnswerStatus('correct');
+      triggerConfetti();
+    } else {
+      setQuizAnswerStatus('wrong');
+    }
+  };
+
+  // Render archetype visualizer component
+  const renderArchetypeVisualizer = () => {
     const commonProps = {
-      isPlaying,
-      setIsPlaying,
-      speed,
-      currentStep,
-      setCurrentStep,
-      setTotalSteps,
-      onStepChange: (step) => setCurrentStep(step),
+      state: currentStepData?.state,
+      problem,
     };
 
-    if (problem.categoryId === 'sliding-window' || problem.interactiveType === 'sliding-window') {
-      return <SlidingWindowVisualizer {...commonProps} />;
+    switch (archetype) {
+      case 'two-pointers':
+        return <TwoPointersViewer {...commonProps} />;
+      case 'sliding-window':
+        return <SlidingWindowViewer {...commonProps} />;
+      case 'binary-search':
+        return <BinarySearchViewer {...commonProps} />;
+      case 'stack':
+        return <StackViewer {...commonProps} />;
+      case 'linked-list':
+        return <LinkedListViewer {...commonProps} />;
+      case 'trees':
+        return <TreeViewer {...commonProps} />;
+      case 'matrix':
+        return <MatrixViewer {...commonProps} />;
+      case 'dp':
+        return <DpTableViewer {...commonProps} />;
+      case 'bit-manipulation':
+        return <BitRegisterViewer {...commonProps} />;
+      case 'arrays':
+      default:
+        return <ArrayViewer {...commonProps} />;
     }
-    if (problem.categoryId === 'two-pointers' || problem.interactiveType === 'two-pointers') {
-      return <TwoPointersVisualizer {...commonProps} />;
-    }
-    if (problem.categoryId === 'binary-search' || problem.interactiveType === 'binary-search') {
-      return <BinarySearchVisualizer {...commonProps} />;
-    }
-
-    // Default to Two Sum / Hash Map array visualizer
-    return (
-      <TwoSumVisualizer
-        {...commonProps}
-        initialNums={problem.initialData?.nums || [2, 7, 11, 15]}
-        initialTarget={problem.initialData?.target ?? 9}
-      />
-    );
   };
 
   const difficultyColors = {
@@ -146,8 +258,9 @@ export default function VisualizerArena({
 
   return (
     <div
-      className={`flex flex-col bg-surface-card border border-surface-border rounded-2xl overflow-hidden transition-all duration-300 relative shadow-glass ${isZenMode ? 'fixed inset-4 z-50 shadow-2xl' : 'w-full h-full'
-        }`}
+      className={`flex flex-col bg-surface-card border border-surface-border rounded-2xl overflow-hidden transition-all duration-300 relative shadow-glass ${
+        isZenMode ? 'fixed inset-4 z-50 shadow-2xl' : 'w-full h-full'
+      }`}
     >
       {/* Visualizer Top Header */}
       <div className="flex flex-col gap-2.5 px-5 py-3 border-b border-surface-border bg-neutral-950/80 backdrop-blur-md">
@@ -160,7 +273,11 @@ export default function VisualizerArena({
             <h2 className="text-base font-bold text-neutral-100 flex items-center gap-2">
               {problem.name}
             </h2>
-            <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${difficultyColors[problem.difficulty] || difficultyColors.Medium}`}>
+            <span
+              className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                difficultyColors[problem.difficulty] || difficultyColors.Medium
+              }`}
+            >
               {problem.difficulty}
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-neutral-900 border border-brand-500/20 text-brand-400 shadow-sm">
@@ -171,6 +288,9 @@ export default function VisualizerArena({
                 <HardDrive className="w-4 h-4" /> {problem.spaceComplexity}
               </span>
             )}
+            <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
+              {archetype}
+            </span>
           </div>
 
           <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-neutral-500">
@@ -178,7 +298,7 @@ export default function VisualizerArena({
           </div>
         </div>
 
-        {/* Row 2: Short problem statement fetched from visual <div class="problem-info"> <p> tag */}
+        {/* Row 2: Short problem statement */}
         {problem.shortDescription && (
           <div className="text-xs text-neutral-300 leading-relaxed bg-neutral-900/50 px-3.5 py-2 rounded-xl border border-white/5 backdrop-blur-sm">
             <span className="text-neutral-400 font-medium mr-1.5">Overview:</span>
@@ -186,43 +306,63 @@ export default function VisualizerArena({
           </div>
         )}
 
-        {/* Row 2.5: Tags fetched from visuals <span class="meta-tag"> */}
-        {problem.tags && problem.tags.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-            {problem.tags.map((tag, idx) => (
-              <span
-                key={idx}
-                className="meta-tag inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-mono font-medium bg-neutral-900/90 border border-white/10 text-neutral-300 hover:text-brand-300 hover:border-brand-500/30 transition-all shadow-sm"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Row 3: Action Buttons & Mode Switcher Tabs (Above the visualizer arena) */}
-        <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/5">
-          {/* Solved Toggle Checkbox */}
-          <button
-            onClick={handleSolvedClick}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border transition-all ${isSolved
-              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-glow-emerald'
-              : 'bg-neutral-900 text-neutral-400 border-white/10 hover:text-neutral-200 hover:border-white/20'
+        {/* Row 3: Action Buttons & Mode Switcher Tabs */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-white/5">
+          <div className="flex items-center gap-2">
+            {/* Solved Toggle Checkbox */}
+            <button
+              onClick={handleSolvedClick}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border transition-all ${
+                isSolved
+                  ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-glow-emerald'
+                  : 'bg-neutral-900 text-neutral-400 border-white/10 hover:text-neutral-200 hover:border-white/20'
               }`}
-          >
-            <CheckCircle className={`w-3.5 h-3.5 ${isSolved ? 'fill-emerald-400 text-neutral-950' : ''}`} />
-            <span>{isSolved ? 'Solved' : 'Mark Solved'}</span>
-          </button>
+            >
+              <CheckCircle
+                className={`w-3.5 h-3.5 ${isSolved ? 'fill-emerald-400 text-neutral-950' : ''}`}
+              />
+              <span>{isSolved ? 'Solved' : 'Mark Solved'}</span>
+            </button>
+
+            {/* Custom Input Toggle */}
+            <button
+              onClick={() => setShowCustomInput(!showCustomInput)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                showCustomInput || appliedCustomInput
+                  ? 'bg-brand-500/20 text-brand-300 border-brand-500/40'
+                  : 'bg-neutral-900 text-neutral-400 border-white/10 hover:text-white'
+              }`}
+              title="Test custom test cases"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Custom Input</span>
+            </button>
+
+            {/* Test Your Understanding Quiz Mode Toggle */}
+            <button
+              onClick={() => setIsQuizMode(!isQuizMode)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                isQuizMode
+                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-glow-indigo'
+                  : 'bg-neutral-900 text-neutral-400 border-white/10 hover:text-white'
+              }`}
+              title="Interactive Quiz Mode"
+            >
+              <HelpCircleIcon className="w-3.5 h-3.5" />
+              <span>Sandbox Quiz {isQuizMode ? 'ON' : 'OFF'}</span>
+            </button>
+          </div>
 
           {/* Mode Switcher Tabs */}
           <div className="flex items-center gap-2">
             <div className="flex items-center p-0.5 rounded-lg bg-neutral-900/90 border border-white/10">
               <button
                 onClick={() => setActiveTab('canvas')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${activeTab === 'canvas'
-                  ? 'bg-brand-500 text-neutral-950 font-semibold shadow-glow-emerald'
-                  : 'text-neutral-400 hover:text-neutral-200'
-                  }`}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  activeTab === 'canvas'
+                    ? 'bg-brand-500 text-neutral-950 font-semibold shadow-glow-emerald'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
               >
                 <Sparkles className="w-3 h-3" />
                 <span>Interactive</span>
@@ -230,21 +370,23 @@ export default function VisualizerArena({
 
               <button
                 onClick={() => setActiveTab('embed')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${activeTab === 'embed'
-                  ? 'bg-neutral-800 text-white font-semibold'
-                  : 'text-neutral-400 hover:text-neutral-200'
-                  }`}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  activeTab === 'embed'
+                    ? 'bg-neutral-800 text-white font-semibold'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
               >
                 <Eye className="w-3 h-3" />
-                <span>Full Visual</span>
+                <span>Legacy D3</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('explanation')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${activeTab === 'explanation'
-                  ? 'bg-neutral-800 text-white font-semibold'
-                  : 'text-neutral-400 hover:text-neutral-200'
-                  }`}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  activeTab === 'explanation'
+                    ? 'bg-neutral-800 text-white font-semibold'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
               >
                 <HelpCircle className="w-3 h-3" />
                 <span>Intuition</span>
@@ -255,22 +397,190 @@ export default function VisualizerArena({
             <button
               onClick={() => setIsZenMode(!isZenMode)}
               className="p-1.5 rounded-lg bg-neutral-900/80 border border-white/10 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 transition-all"
-              title={isZenMode ? "Exit Zen Mode" : "Zen Mode"}
+              title={isZenMode ? 'Exit Zen Mode' : 'Zen Mode'}
             >
               {isZenMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
           </div>
         </div>
+
+        {/* Custom Input Dropdown Bar */}
+        <AnimatePresence>
+          {showCustomInput && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden bg-neutral-900/90 rounded-xl p-3 border border-brand-500/30 flex flex-wrap items-center gap-3"
+            >
+              <div className="flex-1 min-w-[200px]">
+                <label className="text-[11px] font-mono text-neutral-400 block mb-1">
+                  Custom Array / String / Value:
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 2, 7, 11, 15 or 'anagram'"
+                  value={customInputText}
+                  onChange={(e) => setCustomInputText(e.target.value)}
+                  className="w-full bg-neutral-950 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-brand-500"
+                />
+              </div>
+
+              <div className="w-32">
+                <label className="text-[11px] font-mono text-neutral-400 block mb-1">
+                  Target (optional):
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 9"
+                  value={customTargetText}
+                  onChange={(e) => setCustomTargetText(e.target.value)}
+                  className="w-full bg-neutral-950 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-brand-500"
+                />
+              </div>
+
+              <div className="flex items-end gap-2 pt-4">
+                <button
+                  onClick={handleApplyCustomInput}
+                  className="px-3.5 py-1.5 rounded-lg bg-brand-500 text-neutral-950 font-bold text-xs shadow-glow-emerald hover:bg-brand-400 transition-all"
+                >
+                  Simulate
+                </button>
+                {appliedCustomInput && (
+                  <button
+                    onClick={() => {
+                      setAppliedCustomInput(null);
+                      setCurrentStep(0);
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-neutral-800 text-neutral-400 text-xs hover:text-white"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Main Arena Content */}
       <div className="flex-1 relative flex flex-col overflow-hidden bg-grid-pattern">
-        {/* Subtle glowing background ambient halo */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
-
         {activeTab === 'canvas' && (
           <div className="flex-1 flex flex-col justify-between overflow-y-auto">
-            {renderNativeVisualizer()}
+            {/* Step Description Banner */}
+            <div className="px-6 pt-4">
+              <motion.div
+                key={currentStepData?.stepIndex}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-neutral-950/70 rounded-xl p-3 border border-white/5 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-brand-400 animate-pulse" />
+                  <span className="text-xs font-mono font-semibold text-neutral-200">
+                    {currentStepData?.description}
+                  </span>
+                </div>
+                <span className="text-[11px] font-mono text-neutral-500">
+                  Line {currentStepData?.codeLine?.python || '—'} (Python) / Line{' '}
+                  {currentStepData?.codeLine?.java || '—'} (Java)
+                </span>
+              </motion.div>
+            </div>
+
+            {/* Dynamic Archetype Visualization */}
+            <div className="flex-1 flex flex-col justify-center">
+              {renderArchetypeVisualizer()}
+            </div>
+
+            {/* "Test Your Understanding" Sandbox Quiz Card */}
+            {isQuizMode && currentStepData?.quiz && (
+              <motion.div
+                key={`quiz-${currentStepData.stepIndex}`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mx-6 mb-3 p-4 rounded-xl bg-purple-950/40 border border-purple-500/40 backdrop-blur-md shadow-glow-indigo"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                    <HelpCircleIcon className="w-4 h-4 text-purple-400" />
+                    Test Your Understanding: Predict the Next Algorithmic Step
+                  </span>
+                  <span className="text-[10px] font-mono text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded">
+                    +50 XP
+                  </span>
+                </div>
+
+                <p className="text-xs text-neutral-200 mb-3 font-medium">
+                  {currentStepData.quiz.question}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {currentStepData.quiz.options.map((option, idx) => {
+                    const isSelected = quizAnswerSelected === idx;
+                    const isCorrect = idx === currentStepData.quiz.answer;
+
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleQuizAnswer(idx)}
+                        disabled={quizAnswerStatus !== null}
+                        className={`px-3 py-2 rounded-lg text-xs font-mono text-left border transition-all ${
+                          quizAnswerStatus !== null
+                            ? isCorrect
+                              ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold'
+                              : isSelected
+                              ? 'bg-rose-500/20 border-rose-400 text-rose-300'
+                              : 'bg-neutral-900/60 border-white/5 text-neutral-500'
+                            : 'bg-neutral-900 border-white/10 hover:border-purple-400 hover:bg-neutral-800 text-neutral-200'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {quizAnswerStatus && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2.5 pt-2 border-t border-purple-500/20 flex items-center gap-2 text-xs font-mono"
+                  >
+                    {quizAnswerStatus === 'correct' ? (
+                      <span className="text-emerald-400 font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-4 h-4" /> Correct!
+                      </span>
+                    ) : (
+                      <span className="text-rose-400 font-bold flex items-center gap-1">
+                        <XCircle className="w-4 h-4" /> Nice attempt!
+                      </span>
+                    )}
+                    <span className="text-neutral-300">
+                      {currentStepData.quiz.explanation}
+                    </span>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Time & Space Live Variable State Tracker */}
+            {currentStepData?.variables && Object.keys(currentStepData.variables).length > 0 && (
+              <div className="mx-6 mb-2 px-3 py-1.5 rounded-lg bg-neutral-950/70 border border-white/5 flex flex-wrap items-center gap-3">
+                <span className="text-[11px] font-mono text-neutral-400 flex items-center gap-1">
+                  <Activity className="w-3 h-3 text-cyan-400" /> State Tracker:
+                </span>
+                {Object.entries(currentStepData.variables).map(([k, v]) => (
+                  <span
+                    key={k}
+                    className="text-[11px] font-mono px-2 py-0.5 rounded bg-neutral-900 border border-white/5 text-neutral-300"
+                  >
+                    <span className="text-neutral-500">{k}:</span>{' '}
+                    <span className="text-cyan-300 font-bold">{String(v)}</span>
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* Playback Control Toolbar */}
             <div className="mt-auto px-5 py-3 border-t border-surface-border bg-neutral-950/80 backdrop-blur-md flex flex-wrap items-center justify-between gap-4">
@@ -323,7 +633,8 @@ export default function VisualizerArena({
               {/* Step Segmented Progress Indicator */}
               <div className="flex items-center gap-3">
                 <span className="text-xs font-mono text-neutral-400">
-                  Step <span className="text-neutral-200 font-bold">{currentStep + 1}</span> of {totalSteps}
+                  Step <span className="text-neutral-200 font-bold">{currentStep + 1}</span> of{' '}
+                  {totalSteps}
                 </span>
 
                 <div className="w-28 sm:w-36 h-2 bg-neutral-900 rounded-full overflow-hidden border border-white/10 p-0.5">
@@ -342,10 +653,11 @@ export default function VisualizerArena({
                   <button
                     key={s}
                     onClick={() => setSpeed(s)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-mono transition-all ${speed === s
-                      ? 'bg-brand-500 text-neutral-950 font-bold'
-                      : 'text-neutral-400 hover:text-neutral-200'
-                      }`}
+                    className={`px-2 py-0.5 rounded text-[11px] font-mono transition-all ${
+                      speed === s
+                        ? 'bg-brand-500 text-neutral-950 font-bold'
+                        : 'text-neutral-400 hover:text-neutral-200'
+                    }`}
                   >
                     {s}x
                   </button>
@@ -355,7 +667,7 @@ export default function VisualizerArena({
           </div>
         )}
 
-        {/* Embed Mode: Loads the curated deep HTML visualization from visual/ */}
+        {/* Embed Mode: Loads legacy HTML visualization */}
         {activeTab === 'embed' && (
           <div className="w-full h-full flex flex-col bg-neutral-950">
             <div className="flex items-center justify-between px-4 py-2 bg-neutral-900 border-b border-white/5 text-xs text-neutral-400">
@@ -383,7 +695,7 @@ export default function VisualizerArena({
         {/* Intuition & Problem Statement Tab */}
         {activeTab === 'explanation' && (
           <div className="flex-1 p-5 sm:p-6 overflow-y-auto max-w-4xl mx-auto space-y-5">
-            {/* 1. Full Problem Statement (Fetched from Python Solution Comment before class Solution) */}
+            {/* 1. Full Problem Statement */}
             <div className="p-5 rounded-2xl bg-neutral-900/70 border border-white/10 backdrop-blur-md">
               <div className="flex items-center justify-between pb-2 mb-3 border-b border-white/5">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-400">
@@ -400,7 +712,7 @@ export default function VisualizerArena({
               </div>
             </div>
 
-            {/* 2. Layman's Terms Card (Fetched from visual explanation-panel) */}
+            {/* 2. Layman's Terms Card */}
             <div className="p-5 rounded-2xl bg-neutral-900/80 border border-brand-500/30 backdrop-blur-md relative overflow-hidden shadow-glow-emerald">
               <div className="absolute top-0 right-0 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
               <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-emerald-400 mb-3 pb-2 border-b border-white/5">

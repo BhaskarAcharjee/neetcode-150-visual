@@ -91,7 +91,7 @@ class Solution {
     spaceComplexity: "O(n)",
     tags: ["Array", "Hash Set"],
     file: "visual/0217_contains_duplicate.html",
-    interactiveType: "two-sum",
+    interactiveType: "arrays",
     summary: "Given an integer array nums, return true if any value appears at least twice in the array, and return false if every element is distinct.",
     laymanExplanation: "Keep a guest list (hash set). For each person (number) arriving at the party, check if their name is already on the list. If yes, it's a duplicate!",
     initialData: { nums: [1, 2, 3, 1], target: null },
@@ -134,10 +134,10 @@ class Solution {
     spaceComplexity: "O(1)",
     tags: ["String", "Hash Table"],
     file: "visual/0242_valid_anagram.html",
-    interactiveType: "two-sum",
+    interactiveType: "arrays",
     summary: "Given two strings s and t, return true if t is an anagram of s, and false otherwise.",
     laymanExplanation: "Count letter frequencies in both words. If every letter count matches exactly, the words can be rearranged into each other.",
-    initialData: { nums: [1, 3, 2, 4], target: 5 },
+    initialData: { s: "anagram", t: "nagaram" },
     testCases: [
       { input: 's = "anagram", t = "nagaram"', expected: "true" },
       { input: 's = "rat", t = "car"', expected: "false" }
@@ -183,10 +183,10 @@ class Solution {
     spaceComplexity: "O(m * n)",
     tags: ["Array", "Hash Table", "String"],
     file: "visual/0049_group_anagrams.html",
-    interactiveType: "two-sum",
+    interactiveType: "arrays",
     summary: "Given an array of strings strs, group the anagrams together. You can return the answer in any order.",
     laymanExplanation: "Each word's sorted letters or character count signature acts as a unique bucket key. Place each word into its corresponding bucket.",
-    initialData: { nums: [2, 4, 6, 8], target: 10 },
+    initialData: { strs: ["eat", "tea", "tan", "ate", "nat", "bat"] },
     testCases: [
       { input: 'strs = ["eat","tea","tan","ate","nat","bat"]', expected: '[["bat"],["nat","tan"],["ate","eat","tea"]]' }
     ],
@@ -623,10 +623,10 @@ class Solution {
     spaceComplexity: "O(n)",
     tags: ["String", "Stack"],
     file: "visual/0020_valid_parentheses.html",
-    interactiveType: "two-sum",
+    interactiveType: "stack",
     summary: "Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.",
     laymanExplanation: "Push opening brackets onto a stack. When you encounter a closing bracket, pop the top of the stack and make sure it matches.",
-    initialData: { nums: [1, 2, 3, 2, 1], target: 0 },
+    initialData: { s: "()[]{}" },
     testCases: [
       { input: 's = "()[]{}"', expected: "true" },
       { input: 's = "(]"', expected: "false" }
@@ -786,10 +786,10 @@ class Solution:
     spaceComplexity: "O(1)",
     tags: ["Linked List", "Recursion"],
     file: "visual/0206_reverse_linked_list.html",
-    interactiveType: "two-sum",
+    interactiveType: "linked-list",
     summary: "Given the head of a singly linked list, reverse the list, and return the reversed list.",
     laymanExplanation: "Use three pointers (prev, curr, next). In each step, turn curr's arrow backwards to point at prev, then slide all pointers one step forward.",
-    initialData: { nums: [1, 2, 3, 4, 5], target: null },
+    initialData: { nums: [1, 2, 3, 4, 5] },
     testCases: [
       { input: "head = [1, 2, 3, 4, 5]", expected: "[5, 4, 3, 2, 1]" }
     ],
@@ -845,10 +845,10 @@ class Solution {
     spaceComplexity: "O(h)",
     tags: ["Tree", "Depth-First Search", "Binary Tree"],
     file: "visual/0226_invert_binary_tree.html",
-    interactiveType: "two-sum",
+    interactiveType: "trees",
     summary: "Given the root of a binary tree, invert the tree, and return its root.",
     laymanExplanation: "For every node, swap its left and right children, then recursively repeat this swap down both branches.",
-    initialData: { nums: [4, 2, 7, 1, 3, 6, 9], target: null },
+    initialData: { nums: [4, 2, 7, 1, 3, 6, 9] },
     testCases: [
       { input: "root = [4, 2, 7, 1, 3, 6, 9]", expected: "[4, 7, 2, 9, 6, 3, 1]" }
     ],
@@ -906,10 +906,10 @@ class Solution {
     spaceComplexity: "O(1)",
     tags: ["Math", "Dynamic Programming", "Memoization"],
     file: "visual/0070_climbing_stairs.html",
-    interactiveType: "two-sum",
+    interactiveType: "dp",
     summary: "You are climbing a staircase. It takes n steps to reach the top. Each time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top?",
     laymanExplanation: "To reach step n, you could have come from step n-1 (1 step) or step n-2 (2 steps). Thus, ways(n) = ways(n-1) + ways(n-2), exactly like the Fibonacci sequence!",
-    initialData: { nums: [1, 2, 3, 5, 8], target: 5 },
+    initialData: { n: 5 },
     testCases: [
       { input: "n = 2", expected: "2" },
       { input: "n = 3", expected: "3" },
@@ -942,9 +942,34 @@ class Solution {
 ];
 
 // Combine raw with the full list of remaining problems from the original 193 files so the entire NeetCode 150+ roadmap is available!
-import { ALL_CATALOG } from './catalog';
-import { SOLUTIONS_DATA } from './solutionsData';
-import { PROBLEMS_META } from './problemsMeta';
+import { ALL_CATALOG } from './catalog.js';
+import { SOLUTIONS_DATA } from './solutionsData.js';
+import { PROBLEMS_META } from './problemsMeta.js';
+
+function getInitialDataForCategory(cat) {
+  switch (cat) {
+    case 'trees':
+      return { nums: [4, 2, 7, 1, 3, 6, 9] };
+    case 'linked-list':
+      return { nums: [1, 2, 3, 4, 5] };
+    case 'stack':
+      return { s: "()[]{}" };
+    case 'dp':
+      return { n: 5 };
+    case 'binary-search':
+      return { nums: [1, 3, 5, 7, 9, 11], target: 7 };
+    case 'two-pointers':
+      return { nums: [1, 8, 6, 2, 5, 4, 8, 3, 7] };
+    case 'sliding-window':
+      return { nums: [7, 1, 5, 3, 6, 4] };
+    case 'matrix':
+      return { grid: [['1', '1', '0', '0'], ['1', '0', '0', '1'], ['0', '0', '1', '1']] };
+    case 'math':
+      return { n: 11 };
+    default:
+      return { nums: [2, 7, 11, 15], target: 9 };
+  }
+}
 
 export const ALL_PROBLEMS = (() => {
   const map = new Map();
@@ -984,10 +1009,10 @@ export const ALL_PROBLEMS = (() => {
         fullProblemStatement: meta?.fullProblemStatement || `Standard NeetCode algorithm: ${item.name}.`,
         tags: (meta?.tags && meta.tags.length > 0) ? meta.tags : [item.category.split(" ")[0] || "Algorithm"],
         file: item.file,
-        interactiveType: "two-sum",
+        interactiveType: item.categoryId || "arrays",
         summary: meta?.shortDescription || `Standard NeetCode algorithm: ${item.name}.`,
         laymanExplanation: meta?.shortDescription || `An essential problem in ${item.category}.`,
-        initialData: { nums: [1, 3, 5, 7, 9], target: 8 },
+        initialData: getInitialDataForCategory(item.categoryId),
         testCases: [
           { input: `input for ${item.name}`, expected: "Optimal" }
         ],

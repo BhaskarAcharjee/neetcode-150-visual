@@ -1,10 +1,21 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 /**
- * Lightweight syntax highlighter for Python and Java code with sleek Monaco dark tokens
+ * Lightweight syntax highlighter for Python and Java code with active line tracking
  */
-export default function CodeHighlighter({ code = '', language = 'python' }) {
+export default function CodeHighlighter({ code = '', language = 'python', activeLine = null }) {
   const lines = code.trim().split('\n');
+  const activeLineRef = useRef(null);
+
+  // Auto-scroll active line into view smoothly
+  useEffect(() => {
+    if (activeLineRef.current) {
+      activeLineRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [activeLine]);
 
   // Tokenize each line
   const highlightLine = (line) => {
@@ -21,18 +32,10 @@ export default function CodeHighlighter({ code = '', language = 'python' }) {
     }
 
     // Token regular expressions
-    // Python keywords
     const pythonKeywords = /\b(def|class|return|if|elif|else|for|while|in|import|from|as|and|or|not|is|None|True|False|break|continue|try|except|finally|with|pass|raise|lambda)\b/g;
-    // Java keywords
     const javaKeywords = /\b(public|private|protected|class|interface|void|int|boolean|char|double|float|long|return|if|else|for|while|new|null|true|false|this|static|final|import|package|break|continue|try|catch|finally|throw|throws)\b/g;
-    
     const types = /\b(List|Dict|Set|Tuple|Optional|int|str|float|bool|Map|HashMap|HashSet|ArrayList|String|Integer|Character|Double|ListNode|TreeNode)\b/g;
-    const functions = /\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\()/g;
-    const strings = /(".*?"|'.*?'|`.*?`)/g;
-    const numbers = /\b(\d+)\b/g;
 
-    // Simple parser: split into words and symbols
-    // For rich display, let's process with safe regex replacement or token stream
     const tokens = line.split(/(\s+|[()[\]{},.:;=+\-*/<>!&|]+)/);
 
     return tokens.map((token, idx) => {
@@ -71,16 +74,35 @@ export default function CodeHighlighter({ code = '', language = 'python' }) {
 
   return (
     <pre className="font-mono text-[13px] leading-relaxed select-text font-normal">
-      {lines.map((line, idx) => (
-        <div key={idx} className="table-row group hover:bg-white/[0.03] transition-colors">
-          <span className="table-cell select-none text-right pr-4 pl-2 text-neutral-400 text-xs font-mono group-hover:text-neutral-400">
-            {idx + 1}
-          </span>
-          <span className="table-cell whitespace-pre">
-            {highlightLine(line)}
-          </span>
-        </div>
-      ))}
+      {lines.map((line, idx) => {
+        const lineNum = idx + 1;
+        const isActive = activeLine === lineNum;
+
+        return (
+          <div
+            key={idx}
+            ref={isActive ? activeLineRef : null}
+            className={`table-row group transition-colors duration-150 ${
+              isActive
+                ? 'bg-brand-500/20 text-brand-300 font-medium'
+                : 'hover:bg-white/[0.03]'
+            }`}
+          >
+            <span
+              className={`table-cell select-none text-right pr-4 pl-2 text-xs font-mono transition-colors ${
+                isActive
+                  ? 'text-brand-400 font-bold border-l-2 border-brand-400 bg-brand-500/30'
+                  : 'text-neutral-500 group-hover:text-neutral-400'
+              }`}
+            >
+              {lineNum}
+            </span>
+            <span className={`table-cell whitespace-pre ${isActive ? 'pl-2' : ''}`}>
+              {highlightLine(line)}
+            </span>
+          </div>
+        );
+      })}
     </pre>
   );
 }

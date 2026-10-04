@@ -55,7 +55,7 @@ function cleanPythonCode(code) {
   return cleaned.trim();
 }
 
-export default function SolutionEditor({ problem, onSolveSuccess }) {
+export default function SolutionEditor({ problem, onSolveSuccess, activeCodeLine }) {
   const [language, setLanguage] = useState('python'); // 'python' | 'java'
   const [isSplitView, setIsSplitView] = useState(false);
   const [copiedLang, setCopiedLang] = useState(null);
@@ -202,6 +202,7 @@ export default function SolutionEditor({ problem, onSolveSuccess }) {
             <CodeHighlighter
               code={language === 'python' ? pythonCode : javaCode}
               language={language}
+              activeLine={language === 'python' ? activeCodeLine?.python : activeCodeLine?.java}
             />
           </div>
         ) : (
@@ -221,7 +222,11 @@ export default function SolutionEditor({ problem, onSolveSuccess }) {
                 </button>
               </div>
               <div className="flex-1 overflow-auto p-4">
-                <CodeHighlighter code={pythonCode} language="python" />
+                <CodeHighlighter
+                  code={pythonCode}
+                  language="python"
+                  activeLine={activeCodeLine?.python}
+                />
               </div>
             </div>
 
@@ -239,7 +244,11 @@ export default function SolutionEditor({ problem, onSolveSuccess }) {
                 </button>
               </div>
               <div className="flex-1 overflow-auto p-4">
-                <CodeHighlighter code={javaCode} language="java" />
+                <CodeHighlighter
+                  code={javaCode}
+                  language="java"
+                  activeLine={activeCodeLine?.java}
+                />
               </div>
             </div>
           </div>
